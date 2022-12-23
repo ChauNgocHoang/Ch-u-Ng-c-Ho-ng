@@ -1,0 +1,111 @@
+from tkinter import *
+from PIL import ImageTk, Image
+import time
+from tkinter import filedialog
+from tkinter import ttk
+import mysql.connector
+from keras.utils import load_img,img_to_array
+from keras.models import load_model
+import matplotlib.pyplot as plt
+import numpy as np
+from tkinter import messagebox
+from functools import partial
+import cv2
+import time
+import numpy as np
+wd1=Tk()
+wd1.geometry('1200x438')#kích thước giao diện
+wd1.title('Món ăn Việt Nam')
+wd1.iconbitmap('D:\Downloads\\pho.ico')#biểu tượng
+wd1.resizable(False,False)
+canvas_wd1 = Canvas(wd1, width=1200, height=438)
+bg_wd1 = ImageTk.PhotoImage(Image.open('D:\Downloads\project\\backgroud.jpg'))#ảnh nền
+canvas_wd1.create_image(0, 0, anchor=NW, image=bg_wd1)
+canvas_wd1.pack()
+def open_wd2():
+    wd1.withdraw()#ẩn wd1
+    wd2.deiconify()#mở wd2
+button_next=Button(wd1,text='TIẾP THEO',font=('Impact',10),width=20,height=3,command=open_wd2, bg='yellow')#nút nhấn tiếp theo
+button_next.place(x=500, y=180)
+wd2 = Toplevel(wd1)
+wd2.title('Món ăn Việt Nam')
+wd2.iconbitmap('D:\Downloads\project\\pho.ico')
+wd2.geometry('1250x500')
+wd2.resizable(False, False)
+wd2.withdraw()
+canvas_wd2 = Canvas(wd2, width=1200, height=700)
+bg_wd2 = ImageTk.PhotoImage(Image.open('D:\Downloads\project\\BG.jpg'))
+canvas_wd2.create_image(0, 0, anchor=NW,image=bg_wd2)
+canvas_wd2.pack()
+#frame test
+frwd2=Frame(wd2,width=1200, height=700)
+frwd2.place(x=0,y=0)
+bgfr2= ImageTk.PhotoImage(Image.open('D:\Downloads\project\\BG.jpg'))#ảnh nền wd2
+label_frame_wd2=Label(frwd2,image=bgfr2)
+label_frame_wd2.pack()
+file=0#biền đầu vào fake
+def open_file():
+    global bgfr2,file,solution
+    name=filedialog.askopenfilename(initialdir='D:\Downloads\project\\banhxeo.jpg',title='Select A File',filetype=(('jpeg files','*.jpg'),('png files','.png'),('All','*.*')))#đọc nơi ở của file ảnh
+    file=str(name)
+    bgfr2=ImageTk.PhotoImage(Image.open(file))#mở file ảnh
+    label_frame_wd2.configure(image=bgfr2)#chèn ảnh vào frame
+    button_check.place(x=615,y=260)#có ảnh thì nút check xuất hiện
+    button_check.place(width=85,height=25)
+    solution.configure(text='')#khi chọn ảnh mói thì kết quả ảnh cũ biến mất
+button_choose=ttk.Button(wd2,text='Chọn Món Ăn',command=lambda :open_file())#chọn ảnh
+button_choose.place(x=615,y=230)
+#nhận diện bằng file H5
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+model_h5=load_model('D:\Downloads\project\\monan.h5')#file h5
+result=''#kết quả fake
+def check_img():
+    global file,result,solution
+    img = load_img(file, target_size=(150, 150))
+    plt.imshow(img)
+    img = img_to_array(img)
+    img = img.astype('float32')
+    img = img / 255
+    img = np.expand_dims(img, axis=0)
+    result = model_h5.predict(img)
+    class_name = ['BÁNH CUỐN =>(1)Thành phần:Bột gạo,rau,thịt;\
+        (2)Mùi vị:mùi thơm từ nước chấm:\
+        (3)Cách ăn:ăn kèm với các loại chả lụa, chả quế...'
+    ,'BÁNH MÌ =>(1)Thành phần:Bột,nước;\
+        (2) Mùi vị: vị của thịt quay, vị của rau xà lách,giòn của vỏ bánh…;\
+        (3) Cách ăn: kẹp nhân thịt, pate, rau dưa, chà bông...'
+    ,'BÁNH PÍA =>(1)Thành phần:bột mì, trứng muối, đậu xanh, sầu riêng,...;\
+        (2)Mùi vị:thơm mùi sầu riêng, bột bánh mịn, vị ngọt giữa đậu xanh và sầu riêng.;\
+        (3) Cách ăn: Ăn bánh và uống trà '
+    ,'BÁNH TÉT =>(1)Thành phần:gạo nếp, đậu xanh, thịt heo và một số gia vị;\
+        (2)Mùi vị:thơm của nếp,lá dứa, vị ngọt đậu, thịt;\
+        (3)Cách ăn:ăn kèm với thịt kho,với củ kiệu... '
+    ,'BÁNH XÈO =>(1)Thành phần :Bột gạo, nước, bột nghệ, thịt heo, tôm, giá;\
+        (2)Mùi vị:thơm vị của rau,của nước chấm;\
+        (3)Cách ăn:cuốn với bánh tráng và rau,chấm với mắm chua ngọt'
+    ,'BÚN ĐẬU MẮM TÔM =>(1)Thành phần:bún, đậu hũ,chả,nem, mắm tôm, ớt;\
+        (2)Mùi vị:vị mặn mà, cay nồng, vị giòn ngọt,béo,chát khẽ của thịt, lòng, bún;\
+        (3)Cách ăn:một cái mẹt hoặc khay lớn, xếp nguyên liệu vào và một chén mắm tôm'
+    ,'CÁ KHO TÔ =>(1)Thành phần: Cá, dừa, thịt, gừng , tỏi, ớt, gia vị...;\
+        (2)Mùi vị:hương vị cá ngọt mềm, thơm ngậy, nước mắm se se vị cay của ớt;\
+        (3)Cách ăn: Ăn cùng cơm để cảm nhận vị mặn ngọt và cay'
+    ,'CƠM TẤM =>(1)Thành phần: cơm, sườn nướng, nước mắm pha, đồ chua, dưa leo, cà chua, mỡ hành;\
+        (2)Mùi vị:Mùi thơm của sườn nướng, mỡ hành, cơm và đồ chua, nước mắm,...;\
+        (3)Cách ăn: chỉ cần tưới nước chấm lên đĩa cơm tấm và thưởng thức'
+    ,'NEM =>(1)Thành phần:Thịt lợn, dùng men của lá cây để ủ chín;\
+        (2)Mùi vị:vị chát của lá , vị ngọt của thịt và mùi thơm lừng ;\
+        (3)Cách ăn:Ăn cùng rau sống, nước mắm ngon, ăn kèm bún hoặc cơm.'
+    ,'PHỞ =>(1)Thành phần: bánh phở, nước dùng, thịt bò, thịt gà;\
+        (2)Mùi vị:Phở Bắc có vị mặn, phở Nam thì ngọt và nhiều rau;\
+        (3)Cách ăn: Khi ăn bỏ thêm rau,gia vị như ớt tương...']
+    result_check_leaf = int(np.argmax(result, axis=1))
+    print("ĐÂY LÀ MÓN:", class_name[result_check_leaf])
+    time.sleep(3)#đợi 3 giay in ra kết quả
+    solution.configure(text='Kết quả\nĐÂY LÀ MÓN: {}'.format(class_name[result_check_leaf]))#in kết quả vào label
+button_check=ttk.Button(wd2,text='Check',command=check_img)
+button_check.place_forget()
+#in ra ket qua tren tkinter
+solution=Label(wd2,text=result,bg='#f9f9c5',font=('Helvetica bold', 10))
+solution.place(x=10,y=400)
+wd1.mainloop()
